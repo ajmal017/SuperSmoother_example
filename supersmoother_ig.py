@@ -120,6 +120,7 @@ auth_r = requests.put(
 ##########################################################################
 
 
+
 def dataset_from_broker():
     # Axes are the horizontal and vertical lines used to frame a graph or chart:
     # x axis is the horizontal axis, In our case (time)
@@ -136,7 +137,7 @@ def dataset_from_broker():
         base_url, headers=authenticated_headers)
     d = json.loads(auth_r.text)
 
-    base_url = REAL_OR_NO_REAL + "/prices/" + epic_id + "/MINUTE_30/48"
+    base_url = REAL_OR_NO_REAL + "/prices/" + epic_id + "/DAY/365"
     # Price resolution (MINUTE, MINUTE_2, MINUTE_3, MINUTE_5,
     # MINUTE_10, MINUTE_15, MINUTE_30, HOUR, HOUR_2, HOUR_3,
     # HOUR_4, DAY, WEEK, MONTH)
@@ -164,15 +165,16 @@ def dataset_from_broker():
         if i['highPrice']['bid'] is not None:
             highPrice = i['highPrice']['bid']
             y.append(highPrice)
-        ########################################
-        if i['closePrice']['bid'] is not None:
-            closePrice = i['closePrice']['bid']
-            dy.append(closePrice)
-        ########################################
+        # ########################################
+        # if i['closePrice']['bid'] is not None:
+            # closePrice = i['closePrice']['bid']
+            # dy.append(closePrice)
+        # ########################################
 
-    print(x)
-    print(y)
-    print(dy)
+    # print(x)
+    # print(y)
+    # print(dy)
+    dy = x
     return x, y, dy
 
 
@@ -180,45 +182,43 @@ def dataset_from_broker():
 t, y, dy = dataset_from_broker()
 plt.errorbar(t, y, dy, fmt='o', alpha=0.3)
 plt.show()
+plt.clf()
 
 # fit the supersmoother model
 model = SuperSmoother()
 model.fit(t, y, dy)
 
 # find the smoothed fit to the data
-tfit = np.linspace(0, 1, 1000)
+tfit = np.linspace(np.amin(t), np.amax(t), len(t))
 yfit = model.predict(tfit)
-
 # Show the smoothed model of the data
 plt.errorbar(t, y, dy, fmt='o', alpha=0.3)
 plt.plot(tfit, yfit, '-k')
-
 plt.show()
+plt.clf()
 
 plt.errorbar(t, y, dy, fmt='o', alpha=0.3)
-
-
 for smooth in model.primary_smooths:
     plt.plot(tfit, smooth.predict(tfit),
              label='span = {0:.2f}'.format(smooth.span))
 plt.legend()
-
 plt.show()
-
-t = np.linspace(0, 1, 1000)
+plt.clf()
+t = np.linspace(np.amin(t), np.amax(t), len(t))
 plt.plot(t, model.span(t))
 plt.xlabel('t')
 plt.ylabel('smoothed span value')
 
 plt.show()
+plt.clf()
 
-N = 100
+N = 1000
 span = span2 = 0
 
-tfit = np.linspace(0, 1, 100)
+tfit = np.linspace(np.amin(t), np.amax(t), len(t))
+t, y, dy = dataset_from_broker()
 
 for rseed in np.arange(N):
-    t, y, dy = dataset_from_broker()
     model = SuperSmoother().fit(t, y, dy)
     span += model.span(tfit)
     span2 += model.span(tfit) ** 2
@@ -230,19 +230,18 @@ plt.fill_between(tfit, mean - std, mean + std, alpha=0.3)
 plt.xlabel('t')
 plt.ylabel('resulting span')
 plt.show()
+plt.clf()
 
-
-rng = np.random.RandomState(0)
-t = rng.rand(200)
-dy = 0.5
-y = np.sin(5 * np.pi * t ** 2) + dy * rng.randn(200)
-
+t, y, dy = dataset_from_broker()
 plt.errorbar(t, y, dy, fmt='o', alpha=0.3)
 
+# for alpha in range(0,10):
 for alpha in [0, 8, 10]:
     smoother = SuperSmoother(alpha=alpha)
     smoother.fit(t, y, dy)
+    print ("[+]debug, " + str(smoother.predict(tfit)))
     plt.plot(tfit, smoother.predict(tfit),
              label='alpha = {0}'.format(alpha))
 plt.legend(loc=2)
 plt.show()
+plt.clf()
