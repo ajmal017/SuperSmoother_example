@@ -121,10 +121,6 @@ auth_r = requests.put(
 
 
 def dataset_from_broker():
-    # Axes are the horizontal and vertical lines used to frame a graph or chart:
-    # x axis is the horizontal axis, In our case (time)
-    # y axis is the vertical axis, In our case (price)
-    # dy is the actual price
     # rate limit (IG Index)
     sleep(randint(1, 3))
 
