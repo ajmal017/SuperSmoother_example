@@ -120,7 +120,6 @@ auth_r = requests.put(
 ##########################################################################
 
 
-
 def dataset_from_broker():
     # Axes are the horizontal and vertical lines used to frame a graph or chart:
     # x axis is the horizontal axis, In our case (time)
@@ -131,13 +130,14 @@ def dataset_from_broker():
 
     # Bitcoin, purely for testing. Change this to your own thing.
     epic_id = "CS.D.BITCOIN.TODAY.IP"
+    epic_id = "CS.D.LTCUSD.TODAY.IP" #Litecoin, Testing! 
 
     base_url = REAL_OR_NO_REAL + '/markets/' + epic_id
     auth_r = requests.get(
         base_url, headers=authenticated_headers)
     d = json.loads(auth_r.text)
 
-    base_url = REAL_OR_NO_REAL + "/prices/" + epic_id + "/DAY/365"
+    base_url = REAL_OR_NO_REAL + "/prices/" + epic_id + "/HOUR/24"
     # Price resolution (MINUTE, MINUTE_2, MINUTE_3, MINUTE_5,
     # MINUTE_10, MINUTE_15, MINUTE_30, HOUR, HOUR_2, HOUR_3,
     # HOUR_4, DAY, WEEK, MONTH)
@@ -166,15 +166,14 @@ def dataset_from_broker():
             highPrice = i['highPrice']['bid']
             y.append(highPrice)
         # ########################################
-        # if i['closePrice']['bid'] is not None:
-            # closePrice = i['closePrice']['bid']
-            # dy.append(closePrice)
-        # ########################################
+        if i['closePrice']['bid'] is not None:
+            closePrice = i['closePrice']['bid']
+            dy.append(closePrice)
+        ########################################
 
     # print(x)
     # print(y)
     # print(dy)
-    dy = x
     return x, y, dy
 
 
@@ -239,7 +238,7 @@ plt.errorbar(t, y, dy, fmt='o', alpha=0.3)
 for alpha in [0, 8, 10]:
     smoother = SuperSmoother(alpha=alpha)
     smoother.fit(t, y, dy)
-    print ("[+]debug, " + str(smoother.predict(tfit)))
+    print ("[+]debug, " + str(smoother.predict(tfit)[-1]))
     plt.plot(tfit, smoother.predict(tfit),
              label='alpha = {0}'.format(alpha))
 plt.legend(loc=2)
