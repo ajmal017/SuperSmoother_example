@@ -120,20 +120,26 @@ auth_r = requests.put(
 ##########################################################################
 
 
+
 def dataset_from_broker():
+    # Axes are the horizontal and vertical lines used to frame a graph or chart:
+    # x axis is the horizontal axis
+    # y axis is the vertical axis
+    # dy is the actual price
     # rate limit (IG Index)
     sleep(randint(1, 3))
 
     # Bitcoin, purely for testing. Change this to your own thing.
     epic_id = "CS.D.BITCOIN.TODAY.IP"
-    epic_id = "CS.D.LTCUSD.TODAY.IP" #Litecoin, Testing! 
+    #epic_id = "CS.D.LTCUSD.TODAY.IP" #Litecoin, Testing!
+    #epic_id = "CS.D.GBPUSD.TODAY.IP"
 
     base_url = REAL_OR_NO_REAL + '/markets/' + epic_id
     auth_r = requests.get(
         base_url, headers=authenticated_headers)
     d = json.loads(auth_r.text)
 
-    base_url = REAL_OR_NO_REAL + "/prices/" + epic_id + "/HOUR/24"
+    base_url = REAL_OR_NO_REAL + "/prices/" + epic_id + "/HOUR_4/180"
     # Price resolution (MINUTE, MINUTE_2, MINUTE_3, MINUTE_5,
     # MINUTE_10, MINUTE_15, MINUTE_30, HOUR, HOUR_2, HOUR_3,
     # HOUR_4, DAY, WEEK, MONTH)
@@ -153,23 +159,22 @@ def dataset_from_broker():
     dy = []
 
     for i in d['prices']:
-
-        if i['lowPrice']['bid'] is not None:
-            lowPrice = i['lowPrice']['bid']
-            x.append(lowPrice)
-        ########################################
         if i['highPrice']['bid'] is not None:
             highPrice = i['highPrice']['bid']
-            y.append(highPrice)
-        # ########################################
-        if i['closePrice']['bid'] is not None:
-            closePrice = i['closePrice']['bid']
-            dy.append(closePrice)
+            x.append(highPrice)
         ########################################
-
-    # print(x)
-    # print(y)
-    # print(dy)
+        if i['lowPrice']['bid'] is not None:
+            lowPrice = i['lowPrice']['bid']
+            y.append(lowPrice)
+        ########################################
+    y = np.diff(y)
+    x = np.diff(x)
+    np.around(y, 2)
+    np.around(x, 2)
+    dy = x
+    print(x)
+    print(y)
+    print(dy)
     return x, y, dy
 
 
@@ -230,8 +235,8 @@ plt.clf()
 t, y, dy = dataset_from_broker()
 plt.errorbar(t, y, dy, fmt='o', alpha=0.3)
 
-# for alpha in range(0,10):
-for alpha in [0, 8, 10]:
+for alpha in range(0,10):
+# for alpha in [0, 8, 10]:
     smoother = SuperSmoother(alpha=alpha)
     smoother.fit(t, y, dy)
     print ("[+]debug, " + str(smoother.predict(tfit)[-1]))
